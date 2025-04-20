@@ -1,4 +1,3 @@
-// server.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,7 +11,10 @@ int main() {
     struct sockaddr_in address;
     int addrlen = sizeof(address);
     char buffer[1024] = {0};
-    char *hello = "Hello from server";
+
+    // Hardcoded valid credentials
+    const char *valid_username = "admin";
+    const char *valid_password = "1234";
 
     // 1. Create socket
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -23,7 +25,7 @@ int main() {
 
     // 2. Bind to port
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;  // 0.0.0.0
+    address.sin_addr.s_addr = INADDR_ANY;
     address.sin_port = htons(PORT);
 
     if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
@@ -44,11 +46,28 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    // 5. Read and send response
-    read(new_socket, buffer, 1024);
-    printf("Message from client: %s\n", buffer);
-    send(new_socket, hello, strlen(hello), 0);
-    printf("Hello message sent\n");
+    // 5. Read credentials
+    read(new_socket, buffer, sizeof(buffer));
+    printf("Received credentials: %s\n", buffer);
+
+    // 6. Parse username and password
+    char *received_username = strtok(buffer, ":");
+    char *received_password = strtok(NULL, ":");
+
+    char *response;
+
+    // 7. Verify credentials
+    if (received_username && received_password &&
+        strcmp(received_username, valid_username) == 0 &&
+        strcmp(received_password, valid_password) == 0) {
+        response = "AUTH_SUCCESS";
+    } else {
+        response = "AUTH_FAILED";
+    }
+
+    // 8. Send authentication response
+    send(new_socket, response, strlen(response), 0);
+    printf("Sent response: %s\n", response);
 
     close(new_socket);
     close(server_fd);

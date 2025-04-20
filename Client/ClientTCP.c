@@ -13,6 +13,19 @@ int main() {
     char *hello = "Hello from client";
     char buffer[1024] = {0};
 
+    // Authentication 
+    char username[50];
+    char password[20];
+    char credentials[100];
+
+    printf("Enter username: ");
+    scanf("%s", username);
+    printf("Enter password: ");
+    scanf("%s", password);
+
+     //Format credentials (e.g., "username:password")
+     snprintf(credentials, sizeof(credentials), "%s:%s", username, password);
+
     // 1. Create socket
     sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
@@ -36,8 +49,10 @@ int main() {
     }
 
     // 4. Send and receive
-    send(sock, hello, strlen(hello), 0);
-    printf("Hello message sent\n");
+    send(sock, credentials, strlen(credentials), 0);
+    printf("Credentialssent\n");
+
+    // Wait a response
     read(sock, buffer, 1024);
     printf("Message from server: %s\n", buffer);
 

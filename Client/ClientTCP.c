@@ -6,6 +6,8 @@
 #include <arpa/inet.h>
 
 #define PORT 8080
+#define MAX_RECONNECT_ATTEMPTS 5
+#define RECONNECT_DELAY 3 // seconds
 
 // Hilo para enviar mensajes desde stdin al servidor
 void *send_messages(void *arg) {
@@ -20,7 +22,8 @@ void *send_messages(void *arg) {
 
 // Hilo para recibir mensajes desde el servidor y mostrarlos
 void *receive_messages(void *arg) {
-    int sock = *((int *)arg);
+    int *sock_ptr = (int *)arg;
+    int sock = *sock_ptr;
     char buffer[1024];
     int bytes_read;
 
@@ -28,7 +31,52 @@ void *receive_messages(void *arg) {
         buffer[bytes_read] = '\0'; // Asegura el fin de cadena
         printf("%s", buffer); // Muestra el mensaje recibido
     }
+
+    printf("Lost connection to server.\n");
+    pthread_exit(NULL);
     return NULL;
+}
+
+// Función para intentar reconexión
+int try_reconnect(int *sock, struct sockaddr_in *serv_addr, const char *username, const char *password) {
+    int attempts = 0;
+    char credentials[150];
+    char buffer[1024] = {0};
+    
+    while (attempts < MAX_RECONNECT_ATTEMPTS) {
+        printf("Connection lost. Attempting to reconnect (%d/%d)...\n", 
+               attempts + 1, MAX_RECONNECT_ATTEMPTS);
+        sleep(RECONNECT_DELAY);
+        
+        // Crear nuevo socket
+        *sock = socket(AF_INET, SOCK_STREAM, 0);
+        
+        // Intentar conectar
+        if (connect(*sock, (struct sockaddr *)serv_addr, sizeof(*serv_addr)) < 0) {
+            attempts++;
+            close(*sock);
+            continue;
+        }
+        
+        // Enviar credenciales
+        snprintf(credentials, sizeof(credentials), "Username: %s, Password: %s", username, password);
+        send(*sock, credentials, strlen(credentials), 0);
+        
+        // Esperar respuesta
+        read(*sock, buffer, 1024);
+        printf("Server response: %s\n", buffer);
+        
+        if (strcmp(buffer, "AUTH_SUCCESS") == 0) {
+            printf("Reconnection successful!\n");
+            return 1;  // Éxito
+        } else {
+            close(*sock);
+            attempts++;
+        }
+    }
+    
+    printf("Failed to reconnect after %d attempts.\n", MAX_RECONNECT_ATTEMPTS);
+    return 0;  // Fallo
 }
 
 int main() {

@@ -124,7 +124,7 @@ void *handle_client(void *arg) {
                 }
             }
             log_message("User %s disconnected", clients[i].username);
-            
+
             for (int j = i; j < client_count - 1; ++j) {
                 clients[j] = clients[j + 1];
             }

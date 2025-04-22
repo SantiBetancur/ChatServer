@@ -15,6 +15,14 @@ void *send_messages(void *arg) {
     char message[1024];
 
     while (fgets(message, sizeof(message), stdin)) {
+
+        // Verifica si el mensaje es un comando de salida
+        if (strcmp(message, "/exit\n") == 0 || strcmp(message, "/quit\n") == 0) {
+            printf("Disconnecting from server...\n");
+            close(sock);
+            exit(0);  // Terminar el programa
+        }
+
         send(sock, message, strlen(message), 0);
     }
     return NULL;

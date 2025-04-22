@@ -9,12 +9,15 @@
 #define PORT 8080
 #define MAX_CLIENTS 10
 
+typedef struct {
+    int socket;
+    char username[50];
+} ClientInfo;
+
 // Arreglo para almacenar los sockets de los clientes conectados
-int clients[MAX_CLIENTS];
+ClientInfo clients[MAX_CLIENTS];
 int client_count = 0;
 pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-
 
 void trim_newline(char *str) {
     size_t len = strlen(str);
@@ -28,13 +31,15 @@ void trim_newline(char *str) {
     if (start > 0) memmove(str, str + start, len - start + 1);
 }
 
-
 // Función para enviar un mensaje a todos los clientes excepto al que lo envió
-void broadcast_message(char *message, int sender_sock) {
+void broadcast_message(char *message, int sender_sock, char *username) {
+    char formatted_message[1100];
+    snprintf(formatted_message, sizeof(formatted_message), "%s: %s", username, message);
+
     pthread_mutex_lock(&clients_mutex);
     for (int i = 0; i < client_count; ++i) {
-        if (clients[i] != sender_sock) {
-            send(clients[i], message, strlen(message), 0);
+        if (clients[i].socket != sender_sock) {
+            send(clients[i].socket, message, strlen(message), 0);
         }
     }
     pthread_mutex_unlock(&clients_mutex);
@@ -46,6 +51,17 @@ void *handle_client(void *arg) {
     char msg[50];
     char buffer[1024];
     int bytes_read;
+    char client_username[50] = {0};
+
+    //obtener el nombre de usuario del cliente
+    pthread_mutex_lock(&clients_mutex);
+    for (int i = 0; i < client_count; ++i) {
+        if (clients[i].socket == client_sock) {
+            strncpy(client_username, clients[i].username, sizeof(client_username));
+            break;
+        }
+    }
+    pthread_mutex_unlock(&clients_mutex);
 
     // Mientras el cliente esté enviando mensajes
     while ((bytes_read = read(client_sock, buffer, sizeof(buffer) - 1)) > 0) {
@@ -56,17 +72,18 @@ void *handle_client(void *arg) {
         if (strlen(buffer) == 0) {
             printf("Received an empty message, ignoring.\n");
         } else {
-            printf("Received: %s\n", buffer);
+            printf("Received from %s: %s\n", client_username, buffer);
             // Append newline to indicate the end of the message
             strncat(buffer, "\n", sizeof(buffer) - strlen(buffer) - 1);
-            broadcast_message(buffer, client_sock);
+            broadcast_message(buffer, client_sock, client_username);
         }
     }
 
     // Si el cliente se desconecta, lo eliminamos de la lista
     pthread_mutex_lock(&clients_mutex);
     for (int i = 0; i < client_count; ++i) {
-        if (clients[i] == client_sock) {
+        if (clients[i].socket == client_sock) {
+            printf("User %s disconnected\n", clients[i].username);
             for (int j = i; j < client_count - 1; ++j) {
                 clients[j] = clients[j + 1];
             }
@@ -174,8 +191,9 @@ int main() {
         if (response == "AUTH_SUCCESS"){
             pthread_mutex_lock(&clients_mutex);
             if (client_count < MAX_CLIENTS) {
-                // Guardar el nuevo socket en la lista
-                clients[client_count++] = new_socket;
+                clients[client_count].socket = new_socket;
+                strncpy(clients[client_count].username, received_username, sizeof(clients[client_count].username));
+                client_count++;
     
                 // Crear hilo para atender al cliente
                 int *pclient = malloc(sizeof(int));

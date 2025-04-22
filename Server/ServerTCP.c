@@ -43,19 +43,22 @@ void broadcast_message(char *message, int sender_sock) {
 // Función manejadora para cada cliente (se ejecuta en un hilo)
 void *handle_client(void *arg) {
     int client_sock = *((int *)arg);
+    char msg[50];
     char buffer[1024];
     int bytes_read;
 
     // Mientras el cliente esté enviando mensajes
     while ((bytes_read = read(client_sock, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[bytes_read] = '\0'; // Null-terminate
-        trim_newline(buffer);      // Remove spaces/newlines
+        trim_newline(buffer);
+            // Remove spaces/newlines
     
         if (strlen(buffer) == 0) {
             printf("Received an empty message, ignoring.\n");
-            continue;
         } else {
             printf("Received: %s\n", buffer);
+            // Append newline to indicate the end of the message
+            strncat(buffer, "\n", sizeof(buffer) - strlen(buffer) - 1);
             broadcast_message(buffer, client_sock);
         }
     }
@@ -106,8 +109,8 @@ int main() {
 
     // 5. Aceptar múltiples conexiones entrantes
     while (1) {
-        new_socket = accept(server_fd, (struct sockaddr *)&address, &addrlen);
 
+        new_socket = accept(server_fd, (struct sockaddr *)&address, &addrlen);
 
          //  Read credentials
         read(new_socket, buffer, sizeof(buffer));

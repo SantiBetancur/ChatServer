@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include <ctype.h>
 #include <arpa/inet.h>
+#include <time.h>
+#include <stdarg.h>
 
 #define PORT 8080
 #define MAX_CLIENTS 10
@@ -18,6 +20,33 @@ typedef struct {
 ClientInfo clients[MAX_CLIENTS];
 int client_count = 0;
 pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+// Funcion para registar los logs
+void log_message(const char *format, ...) {
+    FILE *log_file = fopen("server_log.txt", "a");
+    if (log_file == NULL) {
+        perror("Error opening log file");
+        return;
+    }
+    
+    // Obtener hora actual
+    time_t now = time(NULL);
+    struct tm *t = localtime(&now);
+    char time_str[20];
+    strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", t);
+    
+    // Escribir timestamp
+    fprintf(log_file, "[%s] ", time_str);
+    
+    // Escribir mensaje formateado
+    va_list args;
+    va_start(args, format);
+    vfprintf(log_file, format, args);
+    va_end(args);
+    
+    fprintf(log_file, "\n");
+    fclose(log_file);
+}
 
 void trim_newline(char *str) {
     size_t len = strlen(str);
@@ -73,6 +102,7 @@ void *handle_client(void *arg) {
             printf("Received an empty message, ignoring.\n");
         } else {
             printf("Received from %s: %s\n", client_username, buffer);
+            log_message("Message from %s: %s", client_username, buffer);
             // Append newline to indicate the end of the message
             strncat(buffer, "\n", sizeof(buffer) - strlen(buffer) - 1);
             broadcast_message(buffer, client_sock, client_username);
@@ -84,6 +114,7 @@ void *handle_client(void *arg) {
     for (int i = 0; i < client_count; ++i) {
         if (clients[i].socket == client_sock) {
             printf("User %s disconnected\n", clients[i].username);
+            log_message("User %s disconnected", clients[i].username);
             for (int j = i; j < client_count - 1; ++j) {
                 clients[j] = clients[j + 1];
             }
@@ -194,6 +225,7 @@ int main() {
                 clients[client_count].socket = new_socket;
                 strncpy(clients[client_count].username, received_username, sizeof(clients[client_count].username));
                 client_count++;
+                log_message("User %s connected", received_username);
     
                 // Crear hilo para atender al cliente
                 int *pclient = malloc(sizeof(int));

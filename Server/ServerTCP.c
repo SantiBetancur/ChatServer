@@ -219,7 +219,7 @@ int main() {
         printf("Sent response: %s\n", response);
 
         //Connect client if auth was success
-        if (response == "AUTH_SUCCESS"){
+        if (strcmp(response, "AUTH_SUCCESS") == 0){
             pthread_mutex_lock(&clients_mutex);
             if (client_count < MAX_CLIENTS) {
                 clients[client_count].socket = new_socket;

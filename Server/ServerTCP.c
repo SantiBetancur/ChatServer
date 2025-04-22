@@ -114,7 +114,17 @@ void *handle_client(void *arg) {
     for (int i = 0; i < client_count; ++i) {
         if (clients[i].socket == client_sock) {
             printf("User %s disconnected\n", clients[i].username);
+
+            // Enviar mensaje de desconexión a los demás clientes
+            char disconnect_message[100];
+            snprintf(disconnect_message, sizeof(disconnect_message), "User %s has left the chat.\n", clients[i].username);
+            for (int j = 0; j < client_count; j++) {
+                if (clients[j].socket != client_sock) {
+                    send(clients[j].socket, disconnect_message, strlen(disconnect_message), 0);
+                }
+            }
             log_message("User %s disconnected", clients[i].username);
+            
             for (int j = i; j < client_count - 1; ++j) {
                 clients[j] = clients[j + 1];
             }
@@ -225,8 +235,17 @@ int main() {
                 clients[client_count].socket = new_socket;
                 strncpy(clients[client_count].username, received_username, sizeof(clients[client_count].username));
                 client_count++;
-                log_message("User %s connected", received_username);
-    
+                
+                // Enviar mensaje de conexion
+                char connect_message[100];
+                snprintf(connect_message, sizeof(connect_message), "User %s has joined the chat.\n", received_username);
+                for (int i = 0; i < client_count - 1; i++) {  // -1 porque el último es el que acaba de conectarse
+                    if (clients[i].socket != new_socket) {
+                        send(clients[i].socket, connect_message, strlen(connect_message), 0);
+                    }
+                }
+                log_message("User %s connected", received_username);  // Esta línea requiere la función log_message que añadimos antes
+            
                 // Crear hilo para atender al cliente
                 int *pclient = malloc(sizeof(int));
                 *pclient = new_socket;

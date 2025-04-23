@@ -184,6 +184,17 @@ int main() {
 
     // 1. Crear socket del servidor
     server_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (server_fd < 0) {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // Agregar opción para reutilizar el socket
+    int opt = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        perror("setsockopt failed");
+        exit(EXIT_FAILURE);
+    }
 
     // 2. Configurar dirección y puerto del servidor
     address.sin_family = AF_INET;
@@ -191,10 +202,16 @@ int main() {
     address.sin_port = htons(PORT);
 
     // 3. Enlazar el socket al puerto
-    bind(server_fd, (struct sockaddr *)&address, sizeof(address));
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+        perror("Bind failed");
+        exit(EXIT_FAILURE);
+    }
 
     // 4. Escuchar conexiones entrantes
-    listen(server_fd, 5);
+    if (listen(server_fd, 5) < 0) {
+        perror("Listen failed");
+        exit(EXIT_FAILURE);
+    }
     printf("Server listening on port %d\n", PORT);
 
     // 5. Aceptar múltiples conexiones entrantes

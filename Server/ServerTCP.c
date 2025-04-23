@@ -137,7 +137,7 @@ void *handle_client(void *arg) {
             //concatenar usuario y mensaje
             char message[1100];
             snprintf(message, sizeof(message), "%s: %s",client_username, buffer);
-            broadcast_message(buffer, client_sock, client_username);
+            broadcast_message(message, client_sock, client_username);
         }
     }
 

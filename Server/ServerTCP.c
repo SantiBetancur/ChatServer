@@ -16,10 +16,38 @@ typedef struct {
     char username[50];
 } ClientInfo;
 
+typedef struct {
+    char username[50];
+    char password[50];
+} UserCredentials;
+
 // Arreglo para almacenar los sockets de los clientes conectados
 ClientInfo clients[MAX_CLIENTS];
 int client_count = 0;
 pthread_mutex_t clients_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+int authenticate_user(const char *username, const char *password) {
+    FILE *user_file = fopen("users.txt", "r");
+    if (user_file == NULL) {
+        // Si no existe el archivo, solo permite el usuario por defecto
+        return (strcmp(username, "admin") == 0 && strcmp(password, "1234") == 0);
+    }
+    
+    UserCredentials user;
+    char line[100];
+    while (fgets(line, sizeof(line), user_file)) {
+        if (sscanf(line, "%49[^:]:%49s", user.username, user.password) == 2) {
+            if (strcmp(username, user.username) == 0 && 
+                strcmp(password, user.password) == 0) {
+                fclose(user_file);
+                return 1;
+            }
+        }
+    }
+    
+    fclose(user_file);
+    return 0;
+}
 
 // Funcion para registar los logs
 void log_message(const char *format, ...) {
@@ -216,9 +244,7 @@ int main() {
 
         // 7. Verify credentials
 
-        if (    
-            strcmp(username_start, valid_username) == 0 &&
-            strcmp(password_start, valid_password) == 0) {
+        if (authenticate_user(username_start, password_start)) {
             response = "AUTH_SUCCESS";
         } else {
             response = "AUTH_FAILED";

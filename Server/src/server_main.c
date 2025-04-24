@@ -91,8 +91,9 @@ int main() {
         while (password_start && *password_start == ' ') {
             password_start++;
         }
-        printf("ServerInfo: Username -> %s\n", username_start);
-        printf("ServerInfo: Password -> %s\n", password_start);
+        printf("\033[1;33mServerInfo: Username -> %s\033[0m\n", username_start);
+        printf("\033[1;33mServerInfo: Password -> %s\033[0m\n", password_start);
+       
         char *response;
 
         // 7. Verify credentials
@@ -136,10 +137,7 @@ int main() {
                 close(new_socket);
             }
             pthread_mutex_unlock(&clients_mutex);
-        } else {
-            char *msg = "Authentication failed, try again\n";
-            send(new_socket, msg, strlen(msg), 0);
-        }
+        } 
     }
 
     return 0;

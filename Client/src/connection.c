@@ -1,5 +1,20 @@
 #include "connection.h"
 
+
+void printChatStart() {
+    system("clear"); // Clear the terminal screen
+
+    printf("**************************************************************\n");
+    printf("*                                                            *\n");
+    printf("*         Welcome to CHATHOT, Enjoy it carefully ;)          *\n");
+    printf("*          use /exit or /quit to left to the chat            *\n");
+    printf("**************************************************************\n");
+    printf("\n");
+    printf("  Your Chats:  ----------------------------  \033[1;32mGroup Messages:\033[0m\n");
+    printf("\n");
+}
+
+
 // Thread to send messages from stdin to server
 void *send_messages(void *arg) {
     int sock = *((int *)arg);
@@ -12,8 +27,12 @@ void *send_messages(void *arg) {
             close(sock);
             exit(0);  // Terminate program
         }
-
+       
+        printf("\033[2;37m%10s\033[0m", "---");
         send(sock, message, strlen(message), 0);
+        printf("\n");
+        
+        
     }
     return NULL;
 }
@@ -27,7 +46,12 @@ void *receive_messages(void *arg) {
 
     while ((bytes_read = read(sock, buffer, sizeof(buffer) - 1)) > 0) {
         buffer[bytes_read] = '\0'; // Ensure null-termination
-        printf("%s", buffer); // Display received message
+        
+       
+        printf("\033[0;32m%60s\033[0m\n", buffer);
+        printf("\033[2;32m%60s\033[0m\n", "---");
+        printf("\n");
+        
     }
 
     printf("Lost connection to server.\n");

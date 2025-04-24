@@ -2,7 +2,7 @@
 #define CONNECTION_H
 
 #include "client_common.h"
-
+void printChatStart();
 // Thread functions
 void *send_messages(void *arg);
 void *receive_messages(void *arg);

@@ -18,8 +18,7 @@ int main() {
         printf("Enter password: ");
         scanf("%s", password);
         snprintf(credentials, sizeof(credentials), "Username: %s, Password: %s", username, password);
-        // Print credentials in yellow
-        printf("\033[1;33m%s\033[0m\n", credentials);
+        
         
 
         // 2. Create socket
@@ -38,6 +37,8 @@ int main() {
 
         // 5. Send credentials
         send(sock, credentials, strlen(credentials), 0);
+        // Print credentials in yellow
+        printf("\033[1;33m%s\033[0m\n", credentials);
         // 6. Wait for authentication response
         read(sock, buffer, 1024);
         printf("\033[1;33m%s\033[0m\n", buffer);

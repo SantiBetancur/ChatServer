@@ -54,8 +54,17 @@ int main() {
         new_socket = accept(server_fd, (struct sockaddr *)&address, &addrlen);
 
         // Read credentials
-        read(new_socket, buffer, sizeof(buffer));
-        printf("ServerInfo: credentials -> %s\n", buffer);
+        
+        memset(buffer, 0, sizeof(buffer));  // Clear buffer
+
+        int bytes_received = read(new_socket, buffer, sizeof(buffer) - 1); 
+        if (bytes_received > 0) {
+            buffer[bytes_received] = '\0';
+            printf("ServerInfo: credentials -> %s\n", buffer);
+        } else {
+            perror("read");
+            continue;
+        }
         
         // 6. Parse username and password
         char *username_prefix = "Username:";

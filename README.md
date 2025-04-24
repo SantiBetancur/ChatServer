@@ -48,8 +48,8 @@ Este proyecto es una implementación de un sistema de chat funcional utilizando 
 
 ## Autores
 - Juan Diego Robles de la Ossa (https://github.com/juanrobles05)
-- Mateo Andres Amaya Cardona (https://github.com/maanamac)
 - Santiago Betancur (https://github.com/SantiBetancur)
+- Mateo Andres Amaya Cardona (https://github.com/maanamac)
 
 ## Referencias
 - Documentación de la API de Sockets de Berkeley.

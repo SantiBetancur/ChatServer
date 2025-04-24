@@ -5,6 +5,7 @@ Este proyecto es una implementación de un sistema de chat funcional utilizando 
 
 ## Requisitos
 - Compilador `gcc`.
+- Herramienta `make` para la gestión de la compilación.
 - Sistema operativo basado en Linux.
 - Conexión de red para pruebas.
 
